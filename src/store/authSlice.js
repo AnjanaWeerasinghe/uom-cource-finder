@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { auth } from "../api/firebaseConfig";
+import { db } from "../api/firebaseConfig";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+
 
 import {
   createUserWithEmailAndPassword,
@@ -26,10 +29,18 @@ export const registerUser = createAsyncThunk(
       // set display name
       await updateProfile(res.user, { displayName: name });
 
+      // Create Firestore user doc with role
+      await setDoc(doc(db, "users", res.user.uid), {
+        name,
+        email,
+        role: "user",  // default role
+      });
+
       const userData = {
         uid: res.user.uid,
         name: name,
         email: res.user.email,
+        role: "user",
       };
 
       // local cache (optional)
@@ -48,10 +59,16 @@ export const loginUser = createAsyncThunk(
     try {
       const res = await signInWithEmailAndPassword(auth, email, password);
 
+      // Get role from Firestore
+      const userRef = doc(db, "users", res.user.uid);
+      const snap = await getDoc(userRef);
+      const role = snap.exists() ? snap.data().role : "user";
+
       const userData = {
         uid: res.user.uid,
         name: res.user.displayName || "Student",
         email: res.user.email,
+        role,   // ✅ add role here
       };
 
       await AsyncStorage.setItem("user", JSON.stringify(userData));
@@ -71,10 +88,16 @@ export const listenToAuthChanges = createAsyncThunk(
         dispatch(setUser(null));
         await AsyncStorage.removeItem("user");
       } else {
+        // Fetch role from Firestore
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        const role = snap.exists() ? snap.data().role : "user";
+
         const userData = {
           uid: user.uid,
           name: user.displayName || "Student",
           email: user.email,
+          role,
         };
         dispatch(setUser(userData));
         await AsyncStorage.setItem("user", JSON.stringify(userData));

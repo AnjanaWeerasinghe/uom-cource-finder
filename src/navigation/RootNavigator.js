@@ -9,6 +9,10 @@ import HomeScreen from '../screens/HomeScreen';
 import DetailsScreen from '../screens/DetailsScreen';
 import FavouritesScreen from '../screens/FavouritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EnrolledScreen from '../screens/EnrolledScreen';
+import AdminHomeScreen from '../screens/Admin/AdminHomeScreen';
+import AddCourseScreen from '../screens/Admin/AddCourseScreen';
+import EditCourseScreen from '../screens/Admin/EditCourseScreen';
 
 import { listenToAuthChanges } from '../store/authSlice';
 import { loadFavourites } from '../store/coursesSlice';
@@ -17,28 +21,64 @@ import { Feather } from '@expo/vector-icons';
 const RootStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function MainTabs() {
-  const user = useSelector(state => state.auth.user);
-
+function AdminTabs() {
   return (
     <Tab.Navigator screenOptions={{
       headerStyle: { backgroundColor: '#fff' },
       tabBarStyle: { backgroundColor: '#fff' },
     }}>
-      <Tab.Screen name="Home" component={HomeScreen}
+      <Tab.Screen 
+        name="AdminHome" 
+        component={AdminHomeScreen}
         options={{
-          headerTitle: `Welcome, ${user?.name || 'User'}`,
-          tabBarIcon: () => <Feather name="home" size={22} />,
+          title: "Manage Courses",
+          tabBarIcon: ({ color }) => <Feather name="settings" size={22} color={color} />,
+          tabBarLabel: "Manage",
         }}
       />
-      <Tab.Screen name="Favourites" component={FavouritesScreen}
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
         options={{
-          tabBarIcon: () => <Feather name="star" size={22} />,
+          tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} />,
         }}
       />
-      <Tab.Screen name="Profile" component={ProfileScreen}
+    </Tab.Navigator>
+  );
+}
+
+function UserTabs() {
+  return (
+    <Tab.Navigator screenOptions={{
+      headerStyle: { backgroundColor: '#fff' },
+      tabBarStyle: { backgroundColor: '#fff' },
+    }}>
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen}
         options={{
-          tabBarIcon: () => <Feather name="user" size={22} />,
+          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen 
+        name="Favourites" 
+        component={FavouritesScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Feather name="star" size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen 
+        name="Enrolled" 
+        component={EnrolledScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Feather name="check-circle" size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} />,
         }}
       />
     </Tab.Navigator>
@@ -52,18 +92,36 @@ export default function RootNavigator() {
   useEffect(() => {
     dispatch(listenToAuthChanges());
     dispatch(loadFavourites());
-  }, []);
+  }, [dispatch]);
 
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
-          <>
-            <RootStack.Screen name="MainTabs" component={MainTabs} />
-            <RootStack.Screen name="Details" component={DetailsScreen} />
-          </>
+        {!user ? (
+          <RootStack.Screen name="Auth" component={AuthNavigator} />
         ) : (
-          <RootStack.Screen name="AuthStack" component={AuthNavigator} />
+          <>
+            {user.role === "admin" ? (
+              <RootStack.Screen name="AdminTabs" component={AdminTabs} />
+            ) : (
+              <RootStack.Screen name="UserTabs" component={UserTabs} />
+            )}
+            <RootStack.Screen 
+              name="Details" 
+              component={DetailsScreen}
+              options={{ headerShown: true, title: "Course Details" }}
+            />
+            <RootStack.Screen 
+              name="AddCourse" 
+              component={AddCourseScreen}
+              options={{ headerShown: true, title: "Add Course" }}
+            />
+            <RootStack.Screen 
+              name="EditCourse" 
+              component={EditCourseScreen}
+              options={{ headerShown: true, title: "Edit Course" }}
+            />
+          </>
         )}
       </RootStack.Navigator>
     </NavigationContainer>
