@@ -11,6 +11,8 @@ import FavouritesScreen from '../screens/FavouritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EnrolledScreen from '../screens/EnrolledScreen';
 import AdminHomeScreen from '../screens/Admin/AdminHomeScreen';
+import AdminEnrollmentsScreen from '../screens/Admin/AdminEnrollmentsScreen';
+import CourseEnrollmentsScreen from '../screens/Admin/CourseEnrollmentsScreen';
 import AddCourseScreen from '../screens/Admin/AddCourseScreen';
 import EditCourseScreen from '../screens/Admin/EditCourseScreen';
 
@@ -34,6 +36,14 @@ function AdminTabs() {
           title: "Manage Courses",
           tabBarIcon: ({ color }) => <Feather name="settings" size={22} color={color} />,
           tabBarLabel: "Manage",
+        }}
+      />
+      <Tab.Screen 
+        name="Enrollments" 
+        component={AdminEnrollmentsScreen}
+        options={{
+          title: "Enrollments",
+          tabBarIcon: ({ color }) => <Feather name="list" size={22} color={color} />,
         }}
       />
       <Tab.Screen 
@@ -120,6 +130,11 @@ export default function RootNavigator() {
               name="EditCourse" 
               component={EditCourseScreen}
               options={{ headerShown: true, title: "Edit Course" }}
+            />
+            <RootStack.Screen 
+              name="CourseEnrollments" 
+              component={CourseEnrollmentsScreen}
+              options={{ headerShown: true, title: "Course Enrollments" }}
             />
           </>
         )}

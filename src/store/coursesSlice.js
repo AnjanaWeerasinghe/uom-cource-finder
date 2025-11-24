@@ -9,12 +9,17 @@ import {
   deleteDoc,
   addDoc,
   updateDoc,
+  query,
+  orderBy,
+  where,
 } from 'firebase/firestore';
 
 const initialState = {
   courses: [],
   favourites: [],
   enrollments: [],
+  allEnrollments: [],
+  courseEnrollments: [],
   loading: false,
   error: null,
 };
@@ -127,12 +132,31 @@ export const deleteCourse = createAsyncThunk(
 /** USER ENROLLMENT */
 export const enrollCourse = createAsyncThunk(
   'courses/enrollCourse',
-  async ({ uid, course }, { rejectWithValue }) => {
+  async ({ user, course }, { rejectWithValue }) => {
     try {
-      await setDoc(doc(db, 'users', uid, 'enrollments', course.id), {
-        ...course,
+      // 1) Save under the user (for user dashboard)
+      await setDoc(doc(db, 'users', user.uid, 'enrollments', course.id), {
+        courseId: course.id,
+        title: course.title,
+        thumbnail: course.thumbnail,
+        category: course.category,
+        price: course.price,
         enrolledAt: new Date().toISOString(),
       });
+
+      // 2) Save globally (for admin dashboard)
+      await addDoc(collection(db, 'enrollments'), {
+        uid: user.uid,
+        userName: user.name,
+        userEmail: user.email,
+
+        courseId: course.id,
+        courseTitle: course.title,
+        courseCategory: course.category,
+
+        enrolledAt: new Date().toISOString(),
+      });
+
       return course;
     } catch (err) {
       return rejectWithValue(err.message);
@@ -146,6 +170,48 @@ export const fetchEnrollments = createAsyncThunk(
     try {
       const snap = await getDocs(collection(db, 'users', uid, 'enrollments'));
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+/** ADMIN: FETCH ALL ENROLLMENTS */
+export const fetchAllEnrollments = createAsyncThunk(
+  'courses/fetchAllEnrollments',
+  async (_, { rejectWithValue }) => {
+    try {
+      const q = query(collection(db, 'enrollments'), orderBy('enrolledAt', 'desc'));
+      const snap = await getDocs(q);
+
+      return snap.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+      }));
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+/** ADMIN: FETCH ENROLLMENTS FOR A SPECIFIC COURSE */
+export const fetchEnrollmentsByCourse = createAsyncThunk(
+  'courses/fetchEnrollmentsByCourse',
+  async (courseId, { rejectWithValue }) => {
+    try {
+      // Query without orderBy to avoid composite index requirement
+      const q = query(
+        collection(db, 'enrollments'),
+        where('courseId', '==', courseId)
+      );
+
+      const snap = await getDocs(q);
+      const enrollments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // Sort in JavaScript instead
+      return enrollments.sort((a, b) => 
+        new Date(b.enrolledAt) - new Date(a.enrolledAt)
+      );
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -218,6 +284,12 @@ const coursesSlice = createSlice({
       })
       .addCase(fetchEnrollments.fulfilled, (state, action) => {
         state.enrollments = action.payload;
+      })
+      .addCase(fetchAllEnrollments.fulfilled, (state, action) => {
+        state.allEnrollments = action.payload;
+      })
+      .addCase(fetchEnrollmentsByCourse.fulfilled, (state, action) => {
+        state.courseEnrollments = action.payload;
       });
   },
 });

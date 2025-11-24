@@ -43,7 +43,7 @@ export default function DetailsScreen({ route }) {
     }
 
     try {
-      await dispatch(enrollCourse({ uid: user.uid, course })).unwrap();
+      await dispatch(enrollCourse({ user, course })).unwrap();
       Alert.alert("Success", "You have successfully enrolled in this course!");
     } catch (error) {
       Alert.alert("Error", "Failed to enroll in course");
