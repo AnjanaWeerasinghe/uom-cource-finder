@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { View, FlatList, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, FlatList, Text, TouchableOpacity, Alert, StyleSheet, TextInput } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCourses, deleteCourse } from "../../store/coursesSlice";
 import CourseCard from "../../components/CourseCard";
@@ -8,10 +8,18 @@ import { Feather } from "@expo/vector-icons";
 export default function AdminHomeScreen({ navigation }) {
   const dispatch = useDispatch();
   const { courses, loading } = useSelector(s => s.courses);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     dispatch(fetchCourses());
   }, [dispatch]);
+
+  const filteredCourses = courses.filter(course =>
+    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (course.code || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleDelete = (courseId, courseTitle) => {
     Alert.alert(
@@ -42,8 +50,23 @@ export default function AdminHomeScreen({ navigation }) {
         <Text style={styles.addButtonText}>Add New Course</Text>
       </TouchableOpacity>
 
+      <View style={styles.searchContainer}>
+        <Feather name="search" size={20} color="#666" style={styles.searchIcon} />
+        <TextInput
+          placeholder="Search courses..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <Feather name="x" size={20} color="#666" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
-        data={courses}
+        data={filteredCourses}
         keyExtractor={item => item.id}
         refreshing={loading}
         onRefresh={() => dispatch(fetchCourses())}
@@ -70,6 +93,17 @@ export default function AdminHomeScreen({ navigation }) {
               >
                 <Feather name="edit-2" size={16} color="#fff" />
                 <Text style={styles.actionBtnText}>Edit</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.enrollBtn]}
+                onPress={() => navigation.navigate("CourseEnrollments", {
+                  courseId: item.id,
+                  courseTitle: item.title
+                })}
+              >
+                <Feather name="users" size={16} color="#fff" />
+                <Text style={styles.actionBtnText}>Enrollments</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -109,6 +143,24 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
   },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+  },
   courseItem: {
     marginBottom: 16,
   },
@@ -128,6 +180,9 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     backgroundColor: "#10b981",
+  },
+  enrollBtn: {
+    backgroundColor: "#f59e0b",
   },
   deleteBtn: {
     backgroundColor: "#ef4444",
