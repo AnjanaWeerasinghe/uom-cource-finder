@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useDispatch, useSelector } from 'react-redux';
 
 import AuthNavigator from './AuthNavigator';
+import LandingScreen from '../screens/User/LandingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import DetailsScreen from '../screens/DetailsScreen';
 import FavouritesScreen from '../screens/FavouritesScreen';
@@ -64,10 +65,19 @@ function UserTabs() {
       tabBarStyle: { backgroundColor: '#fff' },
     }}>
       <Tab.Screen 
-        name="Home" 
+        name="Landing" 
+        component={LandingScreen}
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+          tabBarLabel: "Home",
+        }}
+      />
+      <Tab.Screen 
+        name="Courses" 
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="book" size={22} color={color} />,
         }}
       />
       <Tab.Screen 

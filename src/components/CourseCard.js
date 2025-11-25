@@ -15,7 +15,12 @@ export default function CourseCard({ course, onPress, isFavourite, onToggleFavou
           <Text style={styles.tag}>Popular</Text>
 
           <TouchableOpacity onPress={onToggleFavourite}>
-            <Feather name={isFavourite ? "star" : "star"} size={24} />
+            <Feather 
+              name="star" 
+              size={24} 
+              color={isFavourite ? "#000" : "#ccc"}
+              fill={isFavourite ? "#000" : "transparent"}
+            />
           </TouchableOpacity>
         </View>
       </View>
