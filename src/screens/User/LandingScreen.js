@@ -1,9 +1,22 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, FlatList } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchEnrollments } from "../../store/coursesSlice";
 
 export default function LandingScreen({ navigation }) {
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.auth.user);
+  const { enrollments } = useSelector(state => state.courses);
+
+  useEffect(() => {
+    if (user?.uid) {
+      dispatch(fetchEnrollments(user.uid));
+    }
+  }, [dispatch, user]);
+
+  const recentEnrollments = enrollments.slice(0, 3);
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <LinearGradient
@@ -21,6 +34,39 @@ export default function LandingScreen({ navigation }) {
           </Text>
         </View>
       </LinearGradient>
+
+      {recentEnrollments.length > 0 && (
+        <View style={styles.recentSection}>
+          <View style={styles.recentHeader}>
+            <Text style={styles.recentTitle}>Recently Enrolled</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Enrolled")}>
+              <Text style={styles.viewAllText}>View All →</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <FlatList
+            horizontal
+            data={recentEnrollments}
+            keyExtractor={item => item.id}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.enrolledCard}
+                onPress={() => navigation.navigate("Details", { course: item })}
+              >
+                <Image source={{ uri: item.thumbnail }} style={styles.enrolledImage} />
+                <View style={styles.enrolledContent}>
+                  <Text style={styles.enrolledTitle} numberOfLines={2}>{item.title}</Text>
+                  <View style={styles.enrolledBadge}>
+                    <Feather name="check-circle" size={14} color="#10b981" />
+                    <Text style={styles.enrolledBadgeText}>Enrolled</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
 
       <View style={styles.featuresSection}>
         <Text style={styles.sectionTitle}>Why Choose Us?</Text>
@@ -212,6 +258,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#64748b",
     fontWeight: "600",
+  },
+  recentSection: {
+    paddingVertical: 24,
+    paddingLeft: 24,
+    backgroundColor: "#fff",
+  },
+  recentHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingRight: 24,
+    marginBottom: 16,
+  },
+  recentTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2563eb",
+  },
+  enrolledCard: {
+    width: 180,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginRight: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: "hidden",
+  },
+  enrolledImage: {
+    width: "100%",
+    height: 120,
+    backgroundColor: "#f1f5f9",
+  },
+  enrolledContent: {
+    padding: 12,
+  },
+  enrolledTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 8,
+    minHeight: 36,
+  },
+  enrolledBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  enrolledBadgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#10b981",
   },
   ctaSection: {
     paddingHorizontal: 24,
