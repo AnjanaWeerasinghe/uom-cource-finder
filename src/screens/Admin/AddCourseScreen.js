@@ -3,6 +3,7 @@ import { ScrollView, TextInput, TouchableOpacity, Text, Alert, StyleSheet, View,
 import { useDispatch, useSelector } from "react-redux";
 import { addCourse, fetchCourses } from "../../store/coursesSlice";
 import { Feather } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function AddCourseScreen({ navigation }) {
   const dispatch = useDispatch();
@@ -16,10 +17,29 @@ export default function AddCourseScreen({ navigation }) {
     thumbnail: "",
     price: "",
     status: "Active",
-    duration: ""
+    duration: "",
+    startDate: new Date(),
+    endDate: new Date(new Date().setMonth(new Date().getMonth() + 3))
   });
 
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
   const onChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const onStartDateChange = (event, selectedDate) => {
+    setShowStartPicker(false);
+    if (selectedDate) {
+      setForm(prev => ({ ...prev, startDate: selectedDate }));
+    }
+  };
+
+  const onEndDateChange = (event, selectedDate) => {
+    setShowEndPicker(false);
+    if (selectedDate) {
+      setForm(prev => ({ ...prev, endDate: selectedDate }));
+    }
+  };
 
   const submit = async () => {
     if (!form.title || !form.description || !form.category || !form.price || !form.duration) {
@@ -27,8 +47,18 @@ export default function AddCourseScreen({ navigation }) {
       return;
     }
 
+    if (form.endDate <= form.startDate) {
+      Alert.alert("Validation Error", "End date must be after start date");
+      return;
+    }
+
     try {
-      await dispatch(addCourse(form)).unwrap();
+      const courseData = {
+        ...form,
+        startDate: form.startDate.toISOString(),
+        endDate: form.endDate.toISOString()
+      };
+      await dispatch(addCourse(courseData)).unwrap();
       Alert.alert("Success", "Course added successfully!");
       await dispatch(fetchCourses());
       navigation.goBack();
@@ -119,6 +149,49 @@ export default function AddCourseScreen({ navigation }) {
             onChangeText={v => onChange("duration", v)}
             style={styles.input}
           />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Start Date *</Text>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowStartPicker(true)}
+          >
+            <Feather name="calendar" size={20} color="#666" />
+            <Text style={styles.dateButtonText}>
+              {form.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </Text>
+          </TouchableOpacity>
+          {showStartPicker && (
+            <DateTimePicker
+              value={form.startDate}
+              mode="date"
+              display="default"
+              onChange={onStartDateChange}
+            />
+          )}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>End Date *</Text>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowEndPicker(true)}
+          >
+            <Feather name="calendar" size={20} color="#666" />
+            <Text style={styles.dateButtonText}>
+              {form.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </Text>
+          </TouchableOpacity>
+          {showEndPicker && (
+            <DateTimePicker
+              value={form.endDate}
+              mode="date"
+              display="default"
+              onChange={onEndDateChange}
+              minimumDate={form.startDate}
+            />
+          )}
         </View>
 
         <View style={styles.inputGroup}>
@@ -254,5 +327,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dateButtonText: {
+    fontSize: 16,
+    color: "#333",
   },
 });
