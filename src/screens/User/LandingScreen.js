@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, FlatList } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrollments } from "../../store/coursesSlice";
+import { Calendar } from "react-native-calendars";
 
 export default function LandingScreen({ navigation }) {
   const dispatch = useDispatch();
@@ -17,6 +18,77 @@ export default function LandingScreen({ navigation }) {
   }, [dispatch, user]);
 
   const recentEnrollments = enrollments.slice(0, 3);
+
+  // Calendar state
+  const [selectedDate, setSelectedDate] = useState('');
+  
+  // Generate upcoming deadlines from actual course dates
+  const upcomingDeadlines = enrollments
+    .filter(course => course.endDate) // Only courses with end dates
+    .map(course => {
+      const endDate = new Date(course.endDate);
+      const today = new Date();
+      
+      // Calculate assignment deadline (midpoint between now and end date)
+      const assignmentDeadline = new Date((today.getTime() + endDate.getTime()) / 2);
+      
+      return [
+        {
+          courseTitle: course.title,
+          date: assignmentDeadline.toISOString().split('T')[0],
+          type: 'Assignment',
+          dateDisplay: assignmentDeadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          daysUntil: Math.ceil((assignmentDeadline - today) / (1000 * 60 * 60 * 24))
+        },
+        {
+          courseTitle: course.title,
+          date: endDate.toISOString().split('T')[0],
+          type: 'Final Exam',
+          dateDisplay: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          daysUntil: Math.ceil((endDate - today) / (1000 * 60 * 60 * 24))
+        }
+      ];
+    })
+    .flat()
+    .filter(deadline => deadline.daysUntil > 0) // Only future deadlines
+    .sort((a, b) => a.daysUntil - b.daysUntil) // Sort by nearest first
+    .slice(0, 5); // Show top 5 upcoming deadlines
+
+  // Mark dates on calendar
+  const markedDates = {};
+  
+  // Mark course start dates
+  enrollments.forEach(course => {
+    if (course.startDate) {
+      const startDate = new Date(course.startDate).toISOString().split('T')[0];
+      markedDates[startDate] = {
+        marked: true,
+        dotColor: '#10b981',
+        activeOpacity: 0
+      };
+    }
+  });
+  
+  // Mark deadlines
+  upcomingDeadlines.forEach(item => {
+    if (!markedDates[item.date]) {
+      markedDates[item.date] = {
+        marked: true,
+        dotColor: '#f59e0b',
+        activeOpacity: 0
+      };
+    } else {
+      markedDates[item.date].dotColor = '#ef4444'; // Red if multiple events
+    }
+  });
+
+  if (selectedDate) {
+    markedDates[selectedDate] = {
+      ...markedDates[selectedDate],
+      selected: true,
+      selectedColor: '#2563eb'
+    };
+  }
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <LinearGradient
@@ -65,6 +137,55 @@ export default function LandingScreen({ navigation }) {
               </TouchableOpacity>
             )}
           />
+        </View>
+      )}
+
+      {enrollments.length > 0 && (
+        <View style={styles.calendarSection}>
+          <View style={styles.calendarHeader}>
+            <Feather name="calendar" size={24} color="#2563eb" />
+            <Text style={styles.calendarTitle}>Upcoming Deadlines</Text>
+          </View>
+
+          <Calendar
+            style={styles.calendar}
+            theme={{
+              backgroundColor: '#ffffff',
+              calendarBackground: '#ffffff',
+              textSectionTitleColor: '#64748b',
+              selectedDayBackgroundColor: '#2563eb',
+              selectedDayTextColor: '#ffffff',
+              todayTextColor: '#2563eb',
+              dayTextColor: '#1e293b',
+              textDisabledColor: '#cbd5e1',
+              dotColor: '#f59e0b',
+              selectedDotColor: '#ffffff',
+              arrowColor: '#2563eb',
+              monthTextColor: '#1e293b',
+              textMonthFontWeight: '700',
+              textMonthFontSize: 18,
+            }}
+            markedDates={markedDates}
+            onDayPress={(day) => setSelectedDate(day.dateString)}
+          />
+
+          {upcomingDeadlines.length > 0 && (
+            <View style={styles.deadlinesList}>
+              <Text style={styles.deadlinesListTitle}>Next Deadlines</Text>
+              {upcomingDeadlines.map((deadline, index) => (
+                <View key={index} style={styles.deadlineItem}>
+                  <View style={styles.deadlineDate}>
+                    <Text style={styles.deadlineDateText}>{deadline.dateDisplay}</Text>
+                  </View>
+                  <View style={styles.deadlineInfo}>
+                    <Text style={styles.deadlineTitle} numberOfLines={1}>{deadline.courseTitle}</Text>
+                    <Text style={styles.deadlineType}>{deadline.type} Due</Text>
+                  </View>
+                  <Feather name="alert-circle" size={20} color="#f59e0b" />
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
@@ -354,5 +475,76 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "700",
+  },
+  calendarSection: {
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    backgroundColor: "#fff",
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+  },
+  calendarTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+  calendar: {
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginBottom: 20,
+  },
+  deadlinesList: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    padding: 16,
+  },
+  deadlinesListTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 12,
+  },
+  deadlineItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    gap: 12,
+  },
+  deadlineDate: {
+    backgroundColor: "#fef3c7",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    minWidth: 60,
+    alignItems: "center",
+  },
+  deadlineDateText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#92400e",
+  },
+  deadlineInfo: {
+    flex: 1,
+  },
+  deadlineTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1e293b",
+    marginBottom: 2,
+  },
+  deadlineType: {
+    fontSize: 12,
+    color: "#64748b",
   },
 });
