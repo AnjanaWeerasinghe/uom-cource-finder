@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { toggleFavourite, persistFavourites, saveFavouriteToCloud, removeFavouriteFromCloud, enrollCourse } from '../store/coursesSlice';
+import { toggleFavourite, persistFavourites, saveFavouriteToCloud, removeFavouriteFromCloud, enrollCourse } from '../../store/coursesSlice';
 import { Feather } from '@expo/vector-icons';
 
 export default function DetailsScreen({ route, navigation }) {
@@ -144,7 +144,10 @@ export default function DetailsScreen({ route, navigation }) {
       {isEnrolled && user?.role === "student" && (
         <TouchableOpacity
           style={styles.viewWorksBtn}
-          onPress={() => navigation.navigate("CourseWorks", { course })}
+          onPress={() => navigation.navigate("StudentCourseWorks", { 
+            courseId: course.id,
+            courseTitle: course.title
+          })}
         >
           <Feather name="file-text" size={20} color="#2563eb" />
           <Text style={styles.viewWorksBtnText}>View Course Works</Text>

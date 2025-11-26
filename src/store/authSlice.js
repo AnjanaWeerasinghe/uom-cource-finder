@@ -33,14 +33,14 @@ export const registerUser = createAsyncThunk(
       await setDoc(doc(db, "users", res.user.uid), {
         name,
         email,
-        role: "user",  // default role
+        role: "student",  // default role
       });
 
       const userData = {
         uid: res.user.uid,
         name: name,
         email: res.user.email,
-        role: "user",
+        role: "student",
       };
 
       // local cache (optional)
