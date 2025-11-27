@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, ActivityIndicator, TextInput, StyleSheet } from 'react-native';
+import { View, FlatList, ActivityIndicator, TextInput, StyleSheet, Text } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCourses, toggleFavourite, persistFavourites, saveFavouriteToCloud, removeFavouriteFromCloud } from '../../store/coursesSlice';
 import CourseCard from '../../components/CourseCard';
@@ -43,6 +43,11 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Feather name="book-open" size={28} color="#10b981" />
+        <Text style={styles.title}>Browse Courses</Text>
+      </View>
+
       <View style={styles.searchContainer}>
         <Feather name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
@@ -54,11 +59,15 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
+          <Text style={styles.loadingText}>Loading courses...</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredCourses}
           keyExtractor={item => item.id.toString()}
+          contentContainerStyle={filteredCourses.length === 0 && styles.emptyList}
           renderItem={({ item }) => (
             <CourseCard
               course={item}
@@ -67,6 +76,17 @@ export default function HomeScreen({ navigation }) {
               onPress={() => navigation.navigate("Details", { course: item })}
             />
           )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Feather name="book" size={64} color="#ccc" />
+              <Text style={styles.emptyText}>
+                {query ? "No courses found" : "No courses available"}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {query ? "Try a different search term" : "Check back later for new courses"}
+              </Text>
+            </View>
+          }
         />
       )}
     </View>
@@ -76,8 +96,21 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#f5f5f5",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 16,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1e293b",
   },
   searchContainer: {
     flexDirection: "row",
@@ -85,7 +118,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 12,
-    marginBottom: 16,
+    margin: 16,
     borderWidth: 1,
     borderColor: "#ddd",
   },
@@ -96,5 +129,35 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#64748b",
+  },
+  emptyList: {
+    flexGrow: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 80,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#666",
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#999",
+    marginTop: 4,
   },
 });
