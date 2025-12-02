@@ -22,6 +22,7 @@ import TeacherHomeScreen from "../screens/Teacher/TeacherHomeScreen";
 import TeacherCourseWorksScreen from "../screens/Teacher/TeacherCourseWorksScreen";
 import AddWorkScreen from "../screens/Teacher/AddWorkScreen";
 import WorkSubmissionsScreen from "../screens/Teacher/WorkSubmissionsScreen";
+import TeacherNotificationsScreen from "../screens/Teacher/TeacherNotificationsScreen";
 
 // Student
 import HomeScreen from "../screens/Student/HomeScreen";
@@ -31,6 +32,7 @@ import EnrolledScreen from "../screens/Student/EnrolledScreen";
 import StudentCourseWorksScreen from "../screens/Student/StudentCourseWorksScreen";
 import SubmitWorkScreen from "../screens/Student/SubmitWorkScreen";
 import MySubmissionsScreen from "../screens/Student/MySubmissionsScreen";
+import NotificationsScreen from "../screens/Student/NotificationsScreen";
 import ProfileScreen from "../screens/Student/ProfileScreen";
 
 const RootStack = createNativeStackNavigator();
@@ -80,9 +82,9 @@ function TeacherTabs() {
         name="TeacherHome" 
         component={TeacherHomeScreen}
         options={{
-          title: "My Course Works",
-          tabBarIcon: ({ color }) => <Feather name="file-text" size={22} color={color} />,
-          tabBarLabel: "Works",
+          title: "Dashboard",
+          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+          tabBarLabel: "Home",
         }}
       />
       <Tab.Screen 
@@ -91,6 +93,13 @@ function TeacherTabs() {
         options={{
           title: "Browse Courses",
           tabBarIcon: ({ color }) => <Feather name="book" size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen 
+        name="Notifications" 
+        component={TeacherNotificationsScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Feather name="bell" size={22} color={color} />,
         }}
       />
       <Tab.Screen 
@@ -118,17 +127,17 @@ function StudentTabs() {
         }}
       />
       <Tab.Screen 
-        name="Favourites" 
-        component={FavouritesScreen}
-        options={{
-          tabBarIcon: ({ color }) => <Feather name="star" size={22} color={color} />,
-        }}
-      />
-      <Tab.Screen 
         name="Enrolled" 
         component={EnrolledScreen}
         options={{
           tabBarIcon: ({ color }) => <Feather name="check-circle" size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen 
+        name="Notifications" 
+        component={NotificationsScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Feather name="bell" size={22} color={color} />,
         }}
       />
       <Tab.Screen 

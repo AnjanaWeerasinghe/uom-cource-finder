@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, ActivityIndicator, TextInput, StyleSheet, Text } from 'react-native';
+import { View, FlatList, ActivityIndicator, TextInput, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCourses, toggleFavourite, persistFavourites, saveFavouriteToCloud, removeFavouriteFromCloud } from '../../store/coursesSlice';
+import { fetchMySubmissions } from '../../store/worksSlice';
 import CourseCard from '../../components/CourseCard';
 import { Feather } from '@expo/vector-icons';
 
 export default function HomeScreen({ navigation }) {
   const dispatch = useDispatch();
   const { courses, favourites, loading } = useSelector(state => state.courses);
+  const { mySubmissions } = useSelector(state => state.works);
   const user = useSelector(state => state.auth.user);
   const [query, setQuery] = useState("");
 
+  // Count new notifications (graded submissions)
+  const newNotifications = mySubmissions.filter(sub => sub.status === 'graded').length;
+
   useEffect(() => {
     dispatch(fetchCourses());
-  }, []);
+    if (user?.uid) {
+      dispatch(fetchMySubmissions(user.uid));
+    }
+  }, [user]);
 
   const filteredCourses = courses.filter(c =>
     c.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -44,8 +52,21 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Feather name="book-open" size={28} color="#10b981" />
-        <Text style={styles.title}>Browse Courses</Text>
+        <View style={styles.headerLeft}>
+          <Feather name="book-open" size={28} color="#10b981" />
+          <Text style={styles.title}>Browse Courses</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.notificationButton}
+          onPress={() => navigation.navigate('Notifications')}
+        >
+          <Feather name="bell" size={24} color="#64748b" />
+          {newNotifications > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.badgeText}>{newNotifications}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -101,16 +122,42 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    justifyContent: "space-between",
     padding: 16,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
   },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   title: {
     fontSize: 24,
     fontWeight: "700",
     color: "#1e293b",
+  },
+  notificationButton: {
+    position: "relative",
+    padding: 8,
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "#ef4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
   },
   searchContainer: {
     flexDirection: "row",
