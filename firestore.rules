@@ -7,15 +7,33 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Helper function to get user's role from users collection
+    // Helper function to get user's role from users collection (with fallback)
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'student')
+        : 'student'; // Default to student if no user document or role
     }
 
-    // Courses: everyone reads, teachers have full control, admins can read for oversight
+    // Helper function to check if user is a student (default role)
+    function isStudent() {
+      let role = getUserRole();
+      return role == 'student' || role == null;
+    }
+
+    // Helper function to check if user is a teacher
+    function isTeacher() {
+      return getUserRole() == 'teacher';
+    }
+
+    // Helper function to check if user is an admin
+    function isAdmin() {
+      return getUserRole() == 'admin';
+    }
+
+    // Courses: everyone reads, teachers have full control
     match /courses/{courseId} {
       allow read: if true; // Public reading for all users
-      allow create, update, delete: if isSignedIn() && getUserRole() == "teacher";
+      allow create, update, delete: if isSignedIn() && isTeacher();
     }
 
     // Users collection - Admin focused user management
@@ -24,19 +42,19 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       
       // Admins can read ALL users for user management
-      allow read: if isSignedIn() && getUserRole() == "admin";
+      allow read: if isSignedIn() && isAdmin();
       
       // Admins can update any user's role and manage teachers
-      allow update: if isSignedIn() && getUserRole() == "admin";
+      allow update: if isSignedIn() && isAdmin();
       
       // Admins can create new teacher/admin accounts
-      allow create: if isSignedIn() && getUserRole() == "admin";
+      allow create: if isSignedIn() && isAdmin();
     }
 
-    // Global enrollments: admins can read all, users can enroll themselves
+    // Global enrollments: admins can read all, users (students) can enroll themselves
     match /enrollments/{enrollId} {
-      allow read: if isSignedIn() && getUserRole() == "admin";
-      allow write: if isSignedIn(); // any logged in user can enroll
+      allow read: if isSignedIn() && isAdmin();
+      allow write: if isSignedIn(); // any logged in user (student) can enroll
     }
 
     // User-side enrollments: users can read/write their own
@@ -46,21 +64,28 @@ service cloud.firestore {
 
     // Course Works collection (teacher-controlled assignments)
     match /courseWorks/{workId} {
-      allow read: if isSignedIn(); // all users can read coursework
-      allow create, update, delete: if isSignedIn() && getUserRole() == "teacher";
+      // All authenticated users can read coursework (students by default, teachers, admins)
+      allow read: if isSignedIn();
+      // Only teachers can create, update, delete coursework
+      allow create, update, delete: if isSignedIn() && isTeacher();
     }
 
     // Submissions collection (for student work submissions)
     match /submissions/{submissionId} {
-      allow read: if isSignedIn(); // all users can read submissions
-      allow create, update: if isSignedIn(); // students can submit, teachers can grade
-      allow delete: if isSignedIn() && getUserRole() == "teacher"; // only teachers can delete submissions
+      // All authenticated users can read submissions
+      allow read: if isSignedIn();
+      // Students (default users) and teachers can create/update submissions
+      allow create, update: if isSignedIn();
+      // Only teachers can delete submissions
+      allow delete: if isSignedIn() && isTeacher();
     }
 
     // Works collection (alternative coursework storage)
     match /works/{workId} {
+      // All authenticated users can read works
       allow read: if isSignedIn();
-      allow create, update, delete: if isSignedIn() && getUserRole() == "teacher";
+      // Only teachers can create, update, delete works
+      allow create, update, delete: if isSignedIn() && isTeacher();
     }
   }
 }
