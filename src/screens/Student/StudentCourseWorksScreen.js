@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, FlatList, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchWorksByCourse } from "../../store/worksSlice";
 import WorkCard from "../../components/WorkCard";
@@ -38,9 +38,16 @@ export default function StudentCourseWorksScreen({ route, navigation }) {
         <FlatList
           data={works}
           keyExtractor={w => w.id}
-          refreshing={loading}
-          onRefresh={() => dispatch(fetchWorksByCourse(courseId))}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={() => dispatch(fetchWorksByCourse(courseId))}
+              colors={["#2563eb"]}
+              tintColor="#2563eb"
+            />
+          }
           contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <WorkCard
               work={item}

@@ -7,10 +7,13 @@ import { fetchCourses } from "../../store/coursesSlice";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
-export default function AddWorkScreen({ navigation }) {
+export default function AddWorkScreen({ navigation, route }) {
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
   const { courses, loading } = useSelector(state => state.courses);
+  
+  // Get course info from route params (when navigating from specific course)
+  const { courseId: routeCourseId, courseTitle: routeCourseTitle } = route?.params || {};
   
   // Show all courses for teachers to create coursework
   const availableCourses = courses || [];
@@ -23,6 +26,30 @@ export default function AddWorkScreen({ navigation }) {
   useEffect(() => {
     dispatch(fetchCourses());
   }, [dispatch]);
+
+  // Pre-select course if coming from specific course screen
+  useEffect(() => {
+    console.log('AddWorkScreen - Route params:', { routeCourseId, routeCourseTitle });
+    console.log('AddWorkScreen - Available courses:', availableCourses.length);
+    
+    if (routeCourseId && routeCourseTitle) {
+      // First try to find in loaded courses
+      const foundCourse = availableCourses.find(course => course.id === routeCourseId);
+      
+      if (foundCourse) {
+        console.log('AddWorkScreen - Found course in list:', foundCourse);
+        setSelectedCourse(foundCourse);
+      } else {
+        // If not found, create a temporary course object
+        const tempCourse = {
+          id: routeCourseId,
+          title: routeCourseTitle
+        };
+        console.log('AddWorkScreen - Using temp course object:', tempCourse);
+        setSelectedCourse(tempCourse);
+      }
+    }
+  }, [routeCourseId, routeCourseTitle, availableCourses]);
 
   const handleSubmit = async () => {
     if (!selectedCourse) {
@@ -57,24 +84,41 @@ export default function AddWorkScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Feather name="arrow-left" size={24} color="#333" />
-            </TouchableOpacity>
-            <View style={styles.headerContent}>
-              <Feather name="plus-circle" size={28} color="#10b981" />
-              <Text style={styles.title}>Add Course Work</Text>
-            </View>
+        {/* App Bar */}
+        <View style={styles.appBar}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Feather name="arrow-left" size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.appBarContent}>
+            <Text style={styles.appBarTitle}>Add Course Work</Text>
+            <Text style={styles.appBarSubtitle}>Create new assignment</Text>
           </View>
+          <TouchableOpacity 
+            style={styles.saveButton}
+            onPress={handleSubmit}
+          >
+            <Feather name="check" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Select Course *</Text>
+          {selectedCourse && (
+            <View style={styles.selectedCourseInfo}>
+              <Feather name="check-circle" size={16} color="#10b981" />
+              <Text style={styles.selectedCourseText}>
+                Selected: {selectedCourse.title}
+                {selectedCourse.code ? ` (${selectedCourse.code})` : ''}
+              </Text>
+            </View>
+          )}
           {availableCourses.length === 0 ? (
             <View style={styles.emptyCourses}>
               <Text style={styles.emptyCoursesText}>No courses available. Create a course first.</Text>
@@ -159,45 +203,74 @@ export default function AddWorkScreen({ navigation }) {
           )}
         </View>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Feather name="check" size={20} color="#fff" />
-          <Text style={styles.submitButtonText}>Add Course Work</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  </SafeAreaView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#10b981",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  appBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#10b981",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  backButton: {
+    padding: 4,
+    marginRight: 16,
+  },
+  appBarContent: {
+    flex: 1,
+  },
+  appBarTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  appBarSubtitle: {
+    fontSize: 14,
+    color: "#d1fae5",
+    marginTop: 2,
+  },
+  saveButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   content: {
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
-  header: {
+  selectedCourseInfo: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 20,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    gap: 8,
+    marginBottom: 12,
+    padding: 8,
+    backgroundColor: "#f0fdf4",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
   },
-  headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginLeft: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1e293b",
+  selectedCourseText: {
+    fontSize: 14,
+    color: "#10b981",
+    fontWeight: "600",
   },
   emptyCourses: {
     padding: 20,
@@ -281,20 +354,5 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: 16,
     color: "#1e293b",
-  },
-  submitButton: {
-    backgroundColor: "#10b981",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  submitButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
   },
 });

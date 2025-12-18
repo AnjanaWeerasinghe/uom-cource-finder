@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, Alert, RefreshControl } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllUsers, updateUserRole } from "../../store/adminSlice";
 import { Feather } from "@expo/vector-icons";
@@ -105,9 +105,16 @@ export default function UserManagementScreen() {
       <FlatList
         data={users}
         keyExtractor={u => u.uid}
-        refreshing={loading}
-        onRefresh={() => dispatch(fetchAllUsers())}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => dispatch(fetchAllUsers())}
+            colors={["#2563eb"]}
+            tintColor="#2563eb"
+          />
+        }
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const userRole = item.role || "student"; // Default to student if no role
           return (

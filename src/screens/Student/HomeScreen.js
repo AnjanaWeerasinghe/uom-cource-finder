@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, ActivityIndicator, TextInput, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, FlatList, ActivityIndicator, TextInput, StyleSheet, Text, TouchableOpacity, RefreshControl } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCourses, toggleFavourite, persistFavourites, saveFavouriteToCloud, removeFavouriteFromCloud } from '../../store/coursesSlice';
 import { fetchMySubmissions } from '../../store/worksSlice';
@@ -89,6 +89,20 @@ export default function HomeScreen({ navigation }) {
           data={filteredCourses}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={filteredCourses.length === 0 && styles.emptyList}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={() => {
+                dispatch(fetchCourses());
+                if (user?.uid) {
+                  dispatch(fetchMySubmissions(user.uid));
+                }
+              }}
+              colors={["#10b981"]}
+              tintColor="#10b981"
+            />
+          }
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <CourseCard
               course={item}

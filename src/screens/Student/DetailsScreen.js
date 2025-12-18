@@ -128,16 +128,13 @@ export default function DetailsScreen({ route, navigation }) {
 
       <Text style={styles.price}>Rs {course.price?.toLocaleString()}</Text>
 
-      {user?.role !== "admin" && (
+      {user?.role !== "admin" && !isEnrolled && (
         <TouchableOpacity
-          style={[styles.enrollBtn, isEnrolled && styles.enrolledBtn]}
+          style={styles.enrollBtn}
           onPress={handleEnroll}
-          disabled={isEnrolled}
         >
-          <Feather name={isEnrolled ? "check-circle" : "play-circle"} size={20} color="#fff" />
-          <Text style={styles.enrollBtnText}>
-            {isEnrolled ? "Already Enrolled" : "Enroll Now"}
-          </Text>
+          <Feather name="play-circle" size={20} color="#fff" />
+          <Text style={styles.enrollBtnText}>Enroll Now</Text>
         </TouchableOpacity>
       )}
 
@@ -149,7 +146,7 @@ export default function DetailsScreen({ route, navigation }) {
             courseTitle: course.title
           })}
         >
-          <Feather name="file-text" size={20} color="#2563eb" />
+          <Feather name="file-text" size={20} color="#fff" />
           <Text style={styles.viewWorksBtnText}>View Course Works</Text>
         </TouchableOpacity>
       )}
@@ -238,20 +235,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   viewWorksBtn: {
-    backgroundColor: "#fff",
+    backgroundColor: "#2563eb",
     padding: 16,
     borderRadius: 8,
-    marginTop: 12,
+    marginTop: 24,
     marginBottom: 32,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderWidth: 2,
-    borderColor: "#2563eb",
   },
   viewWorksBtnText: {
-    color: "#2563eb",
+    color: "#fff",
     fontSize: 16,
     fontWeight: "700",
   },
