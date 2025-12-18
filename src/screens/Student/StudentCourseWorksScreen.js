@@ -1,18 +1,38 @@
 import React, { useEffect } from "react";
-import { View, FlatList, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchWorksByCourse } from "../../store/worksSlice";
+import { fetchEnrollments } from "../../store/coursesSlice";
 import WorkCard from "../../components/WorkCard";
 import { Feather } from "@expo/vector-icons";
 
 export default function StudentCourseWorksScreen({ route, navigation }) {
   const { courseId, courseTitle } = route.params;
   const dispatch = useDispatch();
-  const { works, loading } = useSelector(s => s.works);
+  const { works, loading, error } = useSelector(s => s.works);
+  const { user } = useSelector(s => s.auth);
+  const { enrollments } = useSelector(s => s.courses);
+
+  const isEnrolled = enrollments.some(e => e.id === courseId);
 
   useEffect(() => {
+    console.log('StudentCourseWorksScreen - courseId:', courseId);
+    console.log('StudentCourseWorksScreen - user:', user?.role);
+    console.log('StudentCourseWorksScreen - isEnrolled:', isEnrolled);
+    
+    // Ensure enrollments are loaded
+    if (user?.uid) {
+      dispatch(fetchEnrollments(user.uid));
+    }
+    
     dispatch(fetchWorksByCourse(courseId));
-  }, [courseId, dispatch]);
+  }, [courseId, dispatch, user?.uid]);
+
+  useEffect(() => {
+    console.log('StudentCourseWorksScreen - works updated:', works.length, 'items');
+    console.log('StudentCourseWorksScreen - loading:', loading);
+    console.log('StudentCourseWorksScreen - error:', error);
+  }, [works, loading, error]);
 
   return (
     <View style={styles.container}>
@@ -26,7 +46,23 @@ export default function StudentCourseWorksScreen({ route, navigation }) {
         </View>
       </View>
 
-      {works.length === 0 && !loading ? (
+      {!isEnrolled ? (
+        <View style={styles.emptyContainer}>
+          <Feather name="alert-circle" size={64} color="#f59e0b" />
+          <Text style={styles.emptyText}>Not Enrolled</Text>
+          <Text style={styles.emptySubtext}>
+            You need to be enrolled in this course to view coursework
+          </Text>
+        </View>
+      ) : error ? (
+        <View style={styles.emptyContainer}>
+          <Feather name="alert-triangle" size={64} color="#ef4444" />
+          <Text style={styles.emptyText}>Error Loading Works</Text>
+          <Text style={styles.emptySubtext}>
+            {error}
+          </Text>
+        </View>
+      ) : works.length === 0 && !loading ? (
         <View style={styles.emptyContainer}>
           <Feather name="inbox" size={64} color="#cbd5e1" />
           <Text style={styles.emptyText}>No works yet</Text>
@@ -38,9 +74,16 @@ export default function StudentCourseWorksScreen({ route, navigation }) {
         <FlatList
           data={works}
           keyExtractor={w => w.id}
-          refreshing={loading}
-          onRefresh={() => dispatch(fetchWorksByCourse(courseId))}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={() => dispatch(fetchWorksByCourse(courseId))}
+              colors={["#2563eb"]}
+              tintColor="#2563eb"
+            />
+          }
           contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <WorkCard
               work={item}

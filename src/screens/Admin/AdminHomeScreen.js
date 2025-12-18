@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, FlatList, Text, TouchableOpacity, Alert, StyleSheet, TextInput } from "react-native";
+import { View, FlatList, Text, TouchableOpacity, Alert, StyleSheet, TextInput, RefreshControl } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCourses, deleteCourse } from "../../store/coursesSlice";
 import CourseCard from "../../components/CourseCard";
@@ -8,6 +8,7 @@ import { Feather } from "@expo/vector-icons";
 export default function AdminHomeScreen({ navigation }) {
   const dispatch = useDispatch();
   const { courses, loading } = useSelector(s => s.courses);
+  const { user } = useSelector(s => s.auth);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -22,6 +23,12 @@ export default function AdminHomeScreen({ navigation }) {
   );
 
   const handleDelete = (courseId, courseTitle) => {
+    // Teachers can delete their courses, admins have override access
+    if (user?.role !== "teacher" && user?.role !== "admin") {
+      Alert.alert("Access Denied", "Only teachers and administrators can delete courses.");
+      return;
+    }
+    
     Alert.alert(
       "Delete Course?",
       `Are you sure you want to delete "${courseTitle}"? This cannot be undone.`,
@@ -42,13 +49,25 @@ export default function AdminHomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate("AddCourse")}
-      >
-        <Feather name="plus-circle" size={20} color="#fff" />
-        <Text style={styles.addButtonText}>Add New Course</Text>
-      </TouchableOpacity>
+      {user?.role === "teacher" && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate("AddCourse")}
+        >
+          <Feather name="plus-circle" size={20} color="#fff" />
+          <Text style={styles.addButtonText}>Create Course</Text>
+        </TouchableOpacity>
+      )}
+
+      {user?.role === "admin" && (
+        <TouchableOpacity
+          style={[styles.addButton, styles.adminButton]}
+          onPress={() => navigation.navigate("Users")}
+        >
+          <Feather name="users" size={20} color="#fff" />
+          <Text style={styles.addButtonText}>Manage Users</Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.searchContainer}>
         <Feather name="search" size={20} color="#666" style={styles.searchIcon} />
@@ -68,13 +87,26 @@ export default function AdminHomeScreen({ navigation }) {
       <FlatList
         data={filteredCourses}
         keyExtractor={item => item.id}
-        refreshing={loading}
-        onRefresh={() => dispatch(fetchCourses())}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => dispatch(fetchCourses())}
+            colors={["#2563eb"]}
+            tintColor="#2563eb"
+          />
+        }
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Feather name="inbox" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No courses yet</Text>
-            <Text style={styles.emptySubtext}>Add your first course to get started</Text>
+            <Text style={styles.emptyText}>
+              {user?.role === "teacher" ? "No courses created yet" : "No courses available"}
+            </Text>
+            <Text style={styles.emptySubtext}>
+              {user?.role === "teacher" 
+                ? "Create your first course to get started" 
+                : "Teachers will create courses that appear here"}
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -87,32 +119,61 @@ export default function AdminHomeScreen({ navigation }) {
             />
 
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.editBtn]}
-                onPress={() => navigation.navigate("EditCourse", { course: item })}
-              >
-                <Feather name="edit-2" size={16} color="#fff" />
-                <Text style={styles.actionBtnText}>Edit</Text>
-              </TouchableOpacity>
+              {user?.role === "teacher" && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.editBtn]}
+                  onPress={() => navigation.navigate("EditCourse", { course: item })}
+                >
+                  <Feather name="edit-2" size={16} color="#fff" />
+                  <Text style={styles.actionBtnText}>Edit</Text>
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.enrollBtn]}
-                onPress={() => navigation.navigate("CourseEnrollments", {
-                  courseId: item.id,
-                  courseTitle: item.title
-                })}
-              >
-                <Feather name="users" size={16} color="#fff" />
-                <Text style={styles.actionBtnText}>Enrollments</Text>
-              </TouchableOpacity>
+              {user?.role === "teacher" && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.worksBtn]}
+                  onPress={() => navigation.navigate("TeacherCourseWorks", {
+                    courseId: item.id,
+                    courseTitle: item.title
+                  })}
+                >
+                  <Feather name="briefcase" size={16} color="#fff" />
+                  <Text style={styles.actionBtnText}>Coursework</Text>
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.deleteBtn]}
-                onPress={() => handleDelete(item.id, item.title)}
-              >
-                <Feather name="trash-2" size={16} color="#fff" />
-                <Text style={styles.actionBtnText}>Delete</Text>
-              </TouchableOpacity>
+              {user?.role === "teacher" && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.deleteBtn]}
+                  onPress={() => handleDelete(item.id, item.title)}
+                >
+                  <Feather name="trash-2" size={16} color="#fff" />
+                  <Text style={styles.actionBtnText}>Delete</Text>
+                </TouchableOpacity>
+              )}
+
+              {user?.role === "admin" && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.enrollBtn]}
+                  onPress={() => navigation.navigate("CourseEnrollments", {
+                    courseId: item.id,
+                    courseTitle: item.title
+                  })}
+                >
+                  <Feather name="users" size={16} color="#fff" />
+                  <Text style={styles.actionBtnText}>Enrollments</Text>
+                </TouchableOpacity>
+              )}
+
+              {user?.role === "admin" && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.manageBtn]}
+                  onPress={() => navigation.navigate("Users")}
+                >
+                  <Feather name="settings" size={16} color="#fff" />
+                  <Text style={styles.actionBtnText}>Manage</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -134,6 +195,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     flexDirection: "row",
     alignItems: "center",
+  },
+  adminButton: {
+    backgroundColor: "#7c3aed",  // Purple for admin actions
     justifyContent: "center",
     gap: 8,
   },
@@ -181,11 +245,17 @@ const styles = StyleSheet.create({
   editBtn: {
     backgroundColor: "#10b981",
   },
+  worksBtn: {
+    backgroundColor: "#8b5cf6",
+  },
   enrollBtn: {
     backgroundColor: "#f59e0b",
   },
   deleteBtn: {
     backgroundColor: "#ef4444",
+  },
+  manageBtn: {
+    backgroundColor: "#7c3aed",
   },
   actionBtnText: {
     color: "#fff",

@@ -1,118 +1,91 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Helper function to check if user is authenticated
     function isSignedIn() {
       return request.auth != null;
     }
     
-    // Helper function to get user's role from users collection
+    // Helper function to get user's role from users collection (with fallback)
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'student')
+        : 'student'; // Default to student if no user document or role
     }
-    
-    // Helper function to check if user is admin
-    function isAdmin() {
-      return isSignedIn() && getUserRole() == "admin";
-    }
-    
-    // Helper function to check if user is teacher
-    function isTeacher() {
-      return isSignedIn() && getUserRole() == "teacher";
-    }
-    
-    // Helper function to check if user is student
+
+    // Helper function to check if user is a student (default role)
     function isStudent() {
-      return isSignedIn() && getUserRole() == "student";
+      let role = getUserRole();
+      return role == 'student' || role == null;
     }
-    
-    // Courses collection
+
+    // Helper function to check if user is a teacher
+    function isTeacher() {
+      return getUserRole() == 'teacher';
+    }
+
+    // Helper function to check if user is an admin
+    function isAdmin() {
+      return getUserRole() == 'admin';
+    }
+
+    // Courses: everyone reads, teachers have full control
     match /courses/{courseId} {
-      // Anyone can read courses
-      allow read: if true;
-      
-      // Only admin can create, update, or delete courses
-      allow create, update, delete: if isAdmin();
+      allow read: if true; // Public reading for all users
+      allow create, update, delete: if isSignedIn() && isTeacher();
     }
-    
-    // Users collection
+
+    // Users collection - Admin focused user management
     match /users/{userId} {
-      // Users can read their own document
-      allow read: if isSignedIn() && request.auth.uid == userId;
+      // Users can read/write only their own profile
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
       
-      // Users can create their own document (during signup)
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      // Admins can read ALL users for user management
+      allow read: if isSignedIn() && isAdmin();
       
-      // Users can update their own document except the role field
-      allow update: if isSignedIn() && request.auth.uid == userId 
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+      // Admins can update any user's role and manage teachers
+      allow update: if isSignedIn() && isAdmin();
       
-      // Admin can read all users
-      allow read: if isAdmin();
-      
-      // Admin can update any user's role
-      allow update: if isAdmin();
-      
-      // Subcollections for user-specific data
-      match /favourites/{favId} {
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
-      }
-      
-      match /enrollments/{enrollmentId} {
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
-      }
+      // Admins can create new teacher/admin accounts
+      allow create: if isSignedIn() && isAdmin();
     }
-    
-    // Global enrollments collection (for admin view)
-    match /enrollments/{enrollmentId} {
-      // Students can create their own enrollments
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      
-      // Users can read their own enrollments
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      
-      // Admin can read all enrollments
-      allow read: if isAdmin();
-      
-      // Admin can delete enrollments
-      allow delete: if isAdmin();
+
+    // Global enrollments: admins can read all, users (students) can enroll themselves
+    match /enrollments/{enrollId} {
+      allow read: if isSignedIn() && isAdmin();
+      allow write: if isSignedIn(); // any logged in user (student) can enroll
     }
-    
-    // Course Works collection
+
+    // User-side enrollments: users can read/write their own
+    match /users/{userId}/enrollments/{enrollId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Course Works collection (teacher-controlled assignments)
     match /courseWorks/{workId} {
-      // All authenticated users can read course works
+      // All authenticated users can read coursework (students by default, teachers, admins)
       allow read: if isSignedIn();
-      
-      // Teachers and admins can create course works
-      allow create: if isTeacher() || isAdmin();
-      
-      // Teachers can update/delete their own works, admins can update/delete any
-      allow update, delete: if isAdmin() || 
-                             (isTeacher() && resource.data.teacherId == request.auth.uid);
+      // Only teachers can create, update, delete coursework
+      allow create, update, delete: if isSignedIn() && isTeacher();
     }
-    
-    // Submissions collection
+
+    // Submissions collection (for student work submissions)
     match /submissions/{submissionId} {
-      // Students can read their own submissions
-      allow read: if isSignedIn() && resource.data.studentId == request.auth.uid;
-      
-      // Teachers and admins can read all submissions
-      allow read: if isTeacher() || isAdmin();
-      
-      // Students can create their own submissions
-      allow create: if isStudent() && request.resource.data.studentId == request.auth.uid;
-      
-      // Students can update their own submissions (before grading)
-      allow update: if isStudent() && 
-                    resource.data.studentId == request.auth.uid && 
-                    resource.data.status == "submitted";
-      
-      // Teachers can update submissions to grade them
-      allow update: if isTeacher() || isAdmin();
-      
-      // Admin can delete submissions
-      allow delete: if isAdmin();
+      // All authenticated users can read submissions
+      allow read: if isSignedIn();
+      // Students (default users) and teachers can create/update submissions
+      allow create, update: if isSignedIn();
+      // Only teachers can delete submissions
+      allow delete: if isSignedIn() && isTeacher();
+    }
+
+    // Works collection (alternative coursework storage)
+    match /works/{workId} {
+      // All authenticated users can read works
+      allow read: if isSignedIn();
+      // Only teachers can create, update, delete works
+      allow create, update, delete: if isSignedIn() && isTeacher();
     }
   }
 }

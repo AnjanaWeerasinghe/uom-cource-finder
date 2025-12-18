@@ -8,6 +8,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 export default function AddCourseScreen({ navigation }) {
   const dispatch = useDispatch();
   const { loading } = useSelector(s => s.courses);
+  const { user } = useSelector(s => s.auth);
 
   const [form, setForm] = useState({
     title: "",
@@ -56,7 +57,10 @@ export default function AddCourseScreen({ navigation }) {
       const courseData = {
         ...form,
         startDate: form.startDate.toISOString(),
-        endDate: form.endDate.toISOString()
+        endDate: form.endDate.toISOString(),
+        createdBy: user?.uid,
+        createdByName: user?.name,
+        createdByRole: user?.role
       };
       await dispatch(addCourse(courseData)).unwrap();
       Alert.alert("Success", "Course added successfully!");
@@ -83,7 +87,9 @@ export default function AddCourseScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Feather name="arrow-left" size={24} color="#333" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add New Course</Text>
+          <Text style={styles.headerTitle}>
+            {user?.role === "admin" ? "Add New Course" : "Create Course"}
+          </Text>
           <View style={{ width: 24 }} />
         </View>
 

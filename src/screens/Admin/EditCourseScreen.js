@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ScrollView, TextInput, TouchableOpacity, Text, Alert, StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import { updateCourse, fetchCourses } from "../../store/coursesSlice";
 import { Feather } from "@expo/vector-icons";
@@ -71,11 +72,12 @@ export default function EditCourseScreen({ route, navigation }) {
   const statusOptions = ["Active", "Popular", "Upcoming"];
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
       <ScrollView 
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
@@ -241,6 +243,7 @@ export default function EditCourseScreen({ route, navigation }) {
       </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }
 

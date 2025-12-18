@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, FlatList, Text, StyleSheet } from "react-native";
+import { View, FlatList, Text, StyleSheet, RefreshControl } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMySubmissions } from "../../store/worksSlice";
 import SubmissionCard from "../../components/SubmissionCard";
@@ -53,9 +53,16 @@ export default function MySubmissionsScreen() {
         <FlatList
           data={mySubmissions}
           keyExtractor={s => s.id}
-          refreshing={loading}
-          onRefresh={() => student?.uid && dispatch(fetchMySubmissions(student.uid))}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={() => student?.uid && dispatch(fetchMySubmissions(student.uid))}
+              colors={["#2563eb"]}
+              tintColor="#2563eb"
+            />
+          }
           contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <SubmissionCard submission={item} />}
         />
       )}

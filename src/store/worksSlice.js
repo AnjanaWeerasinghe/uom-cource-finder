@@ -45,16 +45,27 @@ export const fetchSubmissionsByWork = createAsyncThunk(
 // Student: Fetch course works for an enrolled course
 export const fetchWorksByCourse = createAsyncThunk(
   "works/fetchWorksByCourse",
-  async (courseId) => {
-    const q = query(
-      collection(db, "courseWorks"),
-      where("courseId", "==", courseId),
-      orderBy("createdAt", "desc")
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  async (courseId, { rejectWithValue }) => {
+    try {
+      console.log('fetchWorksByCourse - Starting fetch for courseId:', courseId);
+      const q = query(
+        collection(db, "courseWorks"),
+        where("courseId", "==", courseId),
+        orderBy("createdAt", "desc")
+      );
+      const snap = await getDocs(q);
+      const works = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log('fetchWorksByCourse - Found works:', works.length);
+      return works;
+    } catch (error) {
+      console.error('fetchWorksByCourse - Error:', error);
+      return rejectWithValue(error.message);
+    }
   }
 );
+
+// Alias for fetchWorksByCourse to match TeacherCourseWorksScreen usage
+export const fetchCourseWorks = fetchWorksByCourse;
 
 // Student: Submit work
 export const submitWork = createAsyncThunk(
@@ -111,7 +122,8 @@ const worksSlice = createSlice({
     works: [], 
     submissions: [], 
     mySubmissions: [],
-    loading: false 
+    loading: false,
+    error: null
   },
   reducers: {
     clearSubmissions(state) {
@@ -120,13 +132,31 @@ const worksSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(fetchWorksByTeacher.pending, state => { state.loading = true; })
+      .addCase(fetchWorksByTeacher.pending, state => { 
+        state.loading = true; 
+        state.error = null;
+      })
       .addCase(fetchWorksByTeacher.fulfilled, (state, action) => {
         state.loading = false; 
         state.works = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchWorksByTeacher.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      .addCase(fetchWorksByCourse.pending, state => { 
+        state.loading = true; 
+        state.error = null;
       })
       .addCase(fetchWorksByCourse.fulfilled, (state, action) => {
+        state.loading = false;
         state.works = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchWorksByCourse.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
       })
       .addCase(addCourseWork.fulfilled, (state, action) => {
         state.works.unshift(action.payload);

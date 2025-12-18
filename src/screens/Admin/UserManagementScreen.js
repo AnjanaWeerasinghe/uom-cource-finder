@@ -1,17 +1,26 @@
 import React, { useEffect } from "react";
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, Alert, RefreshControl } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllUsers, updateUserRole } from "../../store/adminSlice";
 import { Feather } from "@expo/vector-icons";
 
 export default function UserManagementScreen() {
   const dispatch = useDispatch();
-  const { users, loading } = useSelector(s => s.admin);
+  const { users, loading, error } = useSelector(s => s.admin);
   const currentUser = useSelector(s => s.auth.user);
 
   useEffect(() => {
+    console.log("UserManagementScreen: fetching users...");
+    console.log("Current user role:", currentUser?.role);
+    console.log("Current user UID:", currentUser?.uid);
     dispatch(fetchAllUsers());
   }, [dispatch]);
+
+  useEffect(() => {
+    console.log("UserManagementScreen: users updated:", users.length);
+    console.log("UserManagementScreen: current user:", currentUser);
+    console.log("UserManagementScreen: error:", error);
+  }, [users, currentUser, error]);
 
   const setRole = (uid, role, userName) => {
     Alert.alert(
@@ -57,45 +66,73 @@ export default function UserManagementScreen() {
       <View style={styles.header}>
         <Feather name="users" size={28} color="#2563eb" />
         <Text style={styles.title}>Manage Users</Text>
+        <TouchableOpacity 
+          style={styles.refreshBtn}
+          onPress={() => dispatch(fetchAllUsers())}
+        >
+          <Feather name="refresh-cw" size={16} color="#2563eb" />
+        </TouchableOpacity>
       </View>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+          <TouchableOpacity onPress={() => dispatch(fetchAllUsers())}>
+            <Text style={styles.retryText}>Tap to retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{users.filter(u => u.role === "admin").length}</Text>
+          <Text style={styles.statNumber}>{users.filter(u => (u.role || "student") === "admin").length}</Text>
           <Text style={styles.statLabel}>Admins</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{users.filter(u => u.role === "teacher").length}</Text>
+          <Text style={styles.statNumber}>{users.filter(u => (u.role || "student") === "teacher").length}</Text>
           <Text style={styles.statLabel}>Teachers</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{users.filter(u => u.role === "student").length}</Text>
+          <Text style={styles.statNumber}>{users.filter(u => (u.role || "student") === "student").length}</Text>
           <Text style={styles.statLabel}>Students</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNumber}>{users.length}</Text>
+          <Text style={styles.statLabel}>Total</Text>
         </View>
       </View>
 
       <FlatList
         data={users}
         keyExtractor={u => u.uid}
-        refreshing={loading}
-        onRefresh={() => dispatch(fetchAllUsers())}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => dispatch(fetchAllUsers())}
+            colors={["#2563eb"]}
+            tintColor="#2563eb"
+          />
+        }
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.userInfo}>
-                <View style={[styles.avatar, { backgroundColor: getRoleColor(item.role) + "20" }]}>
-                  <Feather name={getRoleIcon(item.role)} size={24} color={getRoleColor(item.role)} />
-                </View>
-                <View style={styles.userDetails}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.email}>{item.email}</Text>
-                  <View style={[styles.roleBadge, { backgroundColor: getRoleColor(item.role) }]}>
-                    <Text style={styles.roleText}>{item.role.toUpperCase()}</Text>
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => {
+          const userRole = item.role || "student"; // Default to student if no role
+          return (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.userInfo}>
+                  <View style={[styles.avatar, { backgroundColor: getRoleColor(userRole) + "20" }]}>
+                    <Feather name={getRoleIcon(userRole)} size={24} color={getRoleColor(userRole)} />
+                  </View>
+                  <View style={styles.userDetails}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Text style={styles.email}>{item.email}</Text>
+                    <View style={[styles.roleBadge, { backgroundColor: getRoleColor(userRole) }]}>
+                      <Text style={styles.roleText}>{userRole.toUpperCase()}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
 
             {item.uid !== currentUser?.uid && (
               <View style={styles.buttonRow}>
@@ -128,7 +165,8 @@ export default function UserManagementScreen() {
               <Text style={styles.currentUserLabel}>Current User (You)</Text>
             )}
           </View>
-        )}
+        );
+        }}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Feather name="users" size={64} color="#ccc" />
@@ -155,9 +193,13 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e5e7eb",
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
     color: "#1e293b",
+    flex: 1,
+  },
+  refreshBtn: {
+    padding: 8,
   },
   statsRow: {
     flexDirection: "row",
@@ -268,5 +310,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#64748b",
     marginTop: 16,
+  },
+  errorContainer: {
+    backgroundColor: "#fef2f2",
+    padding: 12,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderColor: "#fecaca",
+    borderWidth: 1,
+  },
+  errorText: {
+    color: "#ef4444",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  retryText: {
+    color: "#2563eb",
+    fontSize: 14,
+    marginTop: 4,
+    textDecorationLine: "underline",
   },
 });
