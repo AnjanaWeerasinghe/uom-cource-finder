@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { View, FlatList, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchWorksByCourse } from "../../store/worksSlice";
+import { fetchCourseWorks } from "../../store/worksSlice";
 import WorkCard from "../../components/WorkCard";
 import { Feather } from "@expo/vector-icons";
 
@@ -11,11 +12,12 @@ export default function TeacherCourseWorksScreen({ route, navigation }) {
   const { works, loading } = useSelector(s => s.works);
 
   useEffect(() => {
-    dispatch(fetchWorksByCourse(courseId));
+    dispatch(fetchCourseWorks(courseId));
   }, [courseId, dispatch]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+      <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Feather name="arrow-left" size={24} color="#1e293b" />
@@ -47,7 +49,7 @@ export default function TeacherCourseWorksScreen({ route, navigation }) {
           data={works}
           keyExtractor={w => w.id}
           refreshing={loading}
-          onRefresh={() => dispatch(fetchWorksByCourse(courseId))}
+          onRefresh={() => dispatch(fetchCourseWorks(courseId))}
           contentContainerStyle={styles.listContainer}
           renderItem={({ item }) => (
             <WorkCard
@@ -58,6 +60,7 @@ export default function TeacherCourseWorksScreen({ route, navigation }) {
         />
       )}
     </View>
+  </SafeAreaView>
   );
 }
 

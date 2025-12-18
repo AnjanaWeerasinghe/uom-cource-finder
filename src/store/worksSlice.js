@@ -56,6 +56,16 @@ export const fetchWorksByCourse = createAsyncThunk(
   }
 );
 
+// Alias for fetchWorksByCourse to match TeacherCourseWorksScreen usage
+export const fetchCourseWorks = fetchWorksByCourse;
+      where("courseId", "==", courseId),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+);
+
 // Student: Submit work
 export const submitWork = createAsyncThunk(
   "works/submitWork",

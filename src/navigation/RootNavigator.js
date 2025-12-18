@@ -10,6 +10,7 @@ import { listenToAuthChanges } from "../store/authSlice";
 import { loadFavourites } from "../store/coursesSlice";
 
 // Admin
+import AdminDashboardScreen from "../screens/Admin/AdminDashboardScreen";
 import AdminHomeScreen from "../screens/Admin/AdminHomeScreen";
 import AddCourseScreen from "../screens/Admin/AddCourseScreen";
 import EditCourseScreen from "../screens/Admin/EditCourseScreen";
@@ -45,11 +46,11 @@ function AdminTabs() {
       tabBarStyle: { backgroundColor: '#fff' },
     }}>
       <Tab.Screen 
-        name="AdminHome" 
-        component={AdminHomeScreen}
+        name="Dashboard" 
+        component={AdminDashboardScreen}
         options={{
-          title: "Courses",
-          tabBarIcon: ({ color }) => <Feather name="book" size={22} color={color} />,
+          title: "Dashboard",
+          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
         }}
       />
       <Tab.Screen 
@@ -89,9 +90,9 @@ function TeacherTabs() {
       />
       <Tab.Screen 
         name="Courses" 
-        component={HomeScreen}
+        component={AdminHomeScreen}
         options={{
-          title: "Browse Courses",
+          title: "My Courses",
           tabBarIcon: ({ color }) => <Feather name="book" size={22} color={color} />,
         }}
       />
@@ -124,6 +125,13 @@ function StudentTabs() {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ color }) => <Feather name="book" size={22} color={color} />,
+        }}
+      />
+      <Tab.Screen 
+        name="Favourites" 
+        component={FavouritesScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Feather name="star" size={22} color={color} />,
         }}
       />
       <Tab.Screen 

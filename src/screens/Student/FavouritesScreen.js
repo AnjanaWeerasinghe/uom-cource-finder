@@ -1,11 +1,20 @@
-import React from 'react';
-import { View, FlatList, Text, StyleSheet } from 'react-native';
-import { useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { View, FlatList, Text, StyleSheet, RefreshControl } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
 import CourseCard from '../../components/CourseCard';
+import { loadFavourites } from '../../store/coursesSlice';
 import { Feather } from '@expo/vector-icons';
 
 export default function FavouritesScreen({ navigation }) {
-  const { favourites } = useSelector(state => state.courses);
+  const dispatch = useDispatch();
+  const { favourites, loading } = useSelector(state => state.courses);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await dispatch(loadFavourites());
+    setRefreshing(false);
+  };
 
   if (favourites.length === 0) {
     return (
@@ -24,6 +33,14 @@ export default function FavouritesScreen({ navigation }) {
       <FlatList
         data={favourites}
         keyExtractor={item => item.id.toString()}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#3b82f6']}
+            tintColor="#3b82f6"
+          />
+        }
         renderItem={({ item }) => (
           <CourseCard
             course={item}

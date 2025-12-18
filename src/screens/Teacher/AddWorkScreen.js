@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import { addCourseWork } from "../../store/worksSlice";
 import { fetchCourses } from "../../store/coursesSlice";
@@ -9,10 +10,10 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 export default function AddWorkScreen({ navigation }) {
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
-  const { courses } = useSelector(state => state.courses);
+  const { courses, loading } = useSelector(state => state.courses);
   
-  // Filter to show only teacher's courses
-  const teacherCourses = courses.filter(course => course.teacherId === user?.uid);
+  // Show all courses for teachers to create coursework
+  const availableCourses = courses || [];
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -56,37 +57,57 @@ export default function AddWorkScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Feather name="plus-circle" size={28} color="#10b981" />
-          <Text style={styles.title}>Add Course Work</Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Feather name="arrow-left" size={24} color="#333" />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Feather name="plus-circle" size={28} color="#10b981" />
+              <Text style={styles.title}>Add Course Work</Text>
+            </View>
+          </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Select Course *</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.courseScroll}>
-            {teacherCourses.map(course => (
-              <TouchableOpacity
-                key={course.id}
-                style={[
-                  styles.courseChip,
-                  selectedCourse?.id === course.id && styles.courseChipSelected
-                ]}
-                onPress={() => setSelectedCourse(course)}
-              >
-                <Text style={[
-                  styles.courseChipText,
-                  selectedCourse?.id === course.id && styles.courseChipTextSelected
-                ]}>
-                  {course.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {availableCourses.length === 0 ? (
+            <View style={styles.emptyCourses}>
+              <Text style={styles.emptyCoursesText}>No courses available. Create a course first.</Text>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.courseScroll}>
+              {availableCourses.map(course => (
+                <TouchableOpacity
+                  key={course.id}
+                  style={[
+                    styles.courseChip,
+                    selectedCourse?.id === course.id && styles.courseChipSelected
+                  ]}
+                  onPress={() => setSelectedCourse(course)}
+                >
+                  <Text style={[
+                    styles.courseChipText,
+                    selectedCourse?.id === course.id && styles.courseChipTextSelected
+                  ]}>
+                    {course.title}
+                  </Text>
+                  {course.code && (
+                    <Text style={[
+                      styles.courseChipCode,
+                      selectedCourse?.id === course.id && styles.courseChipCodeSelected
+                    ]}>
+                      {course.code}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         <View style={styles.inputGroup}>
@@ -144,6 +165,7 @@ export default function AddWorkScreen({ navigation }) {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }
 
@@ -153,18 +175,51 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 20,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+  },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
-    marginBottom: 24,
+    marginLeft: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
     color: "#1e293b",
+  },
+  emptyCourses: {
+    padding: 20,
+    backgroundColor: "#f8fafc",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    alignItems: "center",
+  },
+  emptyCoursesText: {
+    color: "#64748b",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  courseChipCode: {
+    fontSize: 12,
+    color: "#94a3b8",
+    fontWeight: "500",
+    marginTop: 2,
+  },
+  courseChipCodeSelected: {
+    color: "#059669",
   },
   inputGroup: {
     marginBottom: 20,
@@ -181,11 +236,12 @@ const styles = StyleSheet.create({
   courseChip: {
     backgroundColor: "#f1f5f9",
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginRight: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginRight: 12,
     borderWidth: 2,
     borderColor: "transparent",
+    minWidth: 120,
   },
   courseChipSelected: {
     backgroundColor: "#dcfce7",
