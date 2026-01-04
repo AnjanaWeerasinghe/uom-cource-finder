@@ -64,7 +64,7 @@ export default function UserManagementScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Feather name="users" size={28} color="#2563eb" />
+        <Feather name="users" size={24} color="#2563eb" />
         <Text style={styles.title}>Manage Users</Text>
         <TouchableOpacity 
           style={styles.refreshBtn}

@@ -44,7 +44,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <Feather name="search" size={20} color="#666" style={styles.searchIcon} />
+        <Feather name="search" size={20} color="#64748b" style={styles.searchIcon} />
         <TextInput
           placeholder="Search courses..."
           value={query}
@@ -59,6 +59,8 @@ export default function HomeScreen({ navigation }) {
         <FlatList
           data={filteredCourses}
           keyExtractor={item => item.id.toString()}
+          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 12 }}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <CourseCard
               course={item}
@@ -76,25 +78,31 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8fafc",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
+    opacity: 0.6,
   },
   searchInput: {
     flex: 1,
-    padding: 12,
+    padding: 14,
     fontSize: 16,
+    color: "#1e293b",
   },
 });

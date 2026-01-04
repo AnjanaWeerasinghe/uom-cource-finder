@@ -24,6 +24,8 @@ export default function FavouritesScreen({ navigation }) {
       <FlatList
         data={favourites}
         keyExtractor={item => item.id.toString()}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8 }}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <CourseCard
             course={item}
@@ -40,26 +42,27 @@ export default function FavouritesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8fafc",
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8fafc",
     paddingHorizontal: 32,
   },
   emptyText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#666",
-    marginTop: 16,
+    color: "#64748b",
+    marginTop: 12,
+    letterSpacing: -0.2,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: "#999",
-    marginTop: 8,
+    fontSize: 13,
+    color: "#94a3b8",
+    marginTop: 6,
     textAlign: "center",
+    lineHeight: 18,
   },
 });

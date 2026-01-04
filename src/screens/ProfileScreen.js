@@ -27,16 +27,20 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <View style={styles.profileCard}>
         <View style={styles.avatarContainer}>
-          <Feather name="user" size={64} color="#2563eb" />
+          <Feather name="user" size={48} color="#000000" />
         </View>
 
-        <Text style={styles.name}>{user?.name || "Student"}</Text>
+        <Text style={styles.name}>{user?.name || user?.role === "teacher" ? "Teacher" : user?.role === "admin" ? "Admin" : "Student"}</Text>
         <Text style={styles.email}>{user?.email}</Text>
 
         {user?.role && (
-          <View style={[styles.roleBadge, user.role === "admin" && styles.adminBadge]}>
+          <View style={[styles.roleBadge, 
+            user.role === "admin" && styles.adminBadge,
+            user.role === "teacher" && styles.teacherBadge
+          ]}>
             <Text style={styles.roleText}>
-              {user.role === "admin" ? "👑 Admin" : "🎓 Student"}
+              {user.role === "admin" ? "ADMIN" : 
+               user.role === "teacher" ? "TEACHER" : "STUDENT"}
             </Text>
           </View>
         )}
@@ -44,7 +48,7 @@ export default function ProfileScreen() {
 
       <View style={styles.infoSection}>
         <View style={styles.infoItem}>
-          <Feather name="mail" size={20} color="#666" />
+          <Feather name="mail" size={16} color="#000" />
           <View style={styles.infoTextContainer}>
             <Text style={styles.infoLabel}>Email</Text>
             <Text style={styles.infoValue}>{user?.email}</Text>
@@ -52,7 +56,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.infoItem}>
-          <Feather name="user" size={20} color="#666" />
+          <Feather name="user" size={16} color="#000" />
           <View style={styles.infoTextContainer}>
             <Text style={styles.infoLabel}>Name</Text>
             <Text style={styles.infoValue}>{user?.name || "N/A"}</Text>
@@ -60,18 +64,19 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.infoItem}>
-          <Feather name="shield" size={20} color="#666" />
+          <Feather name="shield" size={16} color="#000" />
           <View style={styles.infoTextContainer}>
             <Text style={styles.infoLabel}>Role</Text>
             <Text style={styles.infoValue}>
-              {user?.role === "admin" ? "Administrator" : "Student"}
+              {user?.role === "admin" ? "Administrator" : 
+               user?.role === "teacher" ? "Teacher" : "Student"}
             </Text>
           </View>
         </View>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Feather name="log-out" size={20} color="#fff" />
+        <Feather name="log-out" size={16} color="#fff" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </View>
@@ -81,92 +86,111 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#ffffff",
   },
   profileCard: {
-    backgroundColor: "#fff",
-    padding: 32,
+    backgroundColor: "#000000",
+    padding: 16,
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    marginHorizontal: 12,
+    marginTop: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
   },
   avatarContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#e3f2fd",
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: "#e5e5e5",
   },
   name: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 4,
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#ffffff",
+    marginBottom: 2,
+    letterSpacing: -0.2,
   },
   email: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 12,
+    fontSize: 12,
+    color: "#a3a3a3",
+    marginBottom: 6,
   },
   roleBadge: {
-    backgroundColor: "#10b981",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginTop: 8,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginTop: 4,
   },
   adminBadge: {
-    backgroundColor: "#f59e0b",
+    backgroundColor: "#ffffff",
+  },
+  teacherBadge: {
+    backgroundColor: "#ffffff",
   },
   roleText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
+    color: "#000000",
+    fontWeight: "700",
+    fontSize: 10,
+    letterSpacing: 0.5,
   },
   infoSection: {
-    backgroundColor: "#fff",
-    marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: "#000000",
+    marginTop: 8,
+    marginHorizontal: 12,
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
   },
   infoItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: "#262626",
   },
   infoTextContainer: {
-    marginLeft: 16,
+    marginLeft: 8,
     flex: 1,
   },
   infoLabel: {
-    fontSize: 12,
-    color: "#999",
-    marginBottom: 4,
+    fontSize: 9,
+    color: "#737373",
+    marginBottom: 1,
+    textTransform: "uppercase",
+    fontWeight: "600",
+    letterSpacing: 0.8,
   },
   infoValue: {
-    fontSize: 16,
-    color: "#333",
+    fontSize: 13,
+    color: "#ffffff",
     fontWeight: "500",
   },
   logoutButton: {
-    backgroundColor: "#ef4444",
-    marginHorizontal: 16,
-    marginTop: 24,
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: "#000000",
+    marginHorizontal: 12,
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 8,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
   },
   logoutText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });

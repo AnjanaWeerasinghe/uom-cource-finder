@@ -18,7 +18,8 @@ const onSubmit = data => dispatch(registerUser(data));
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
+      <Text style={styles.title}>Create Account</Text>
+      <Text style={styles.subtitle}>Join us today</Text>
 
       <Controller
         control={control}
@@ -58,9 +59,58 @@ const onSubmit = data => dispatch(registerUser(data));
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
-  input: { borderWidth: 1, borderRadius: 8, padding: 10, marginBottom: 12 },
-  btn: { backgroundColor: '#2563eb', padding: 12, borderRadius: 8, alignItems: 'center' },
-  btnText: { color: '#fff', fontWeight: '600' },
+  container: { 
+    flex: 1, 
+    padding: 20, 
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  title: { 
+    fontSize: 32, 
+    fontWeight: '800', 
+    marginBottom: 8, 
+    textAlign: 'center',
+    color: '#1e293b',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 32,
+    fontWeight: '500',
+  },
+  input: { 
+    borderWidth: 1.5, 
+    borderColor: '#e2e8f0',
+    borderRadius: 16, 
+    padding: 16, 
+    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    fontSize: 16,
+    color: '#1e293b',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  btn: { 
+    backgroundColor: '#2563eb', 
+    padding: 16, 
+    borderRadius: 16, 
+    alignItems: 'center',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    marginTop: 8,
+  },
+  btnText: { 
+    color: '#fff', 
+    fontWeight: '700',
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
 });
